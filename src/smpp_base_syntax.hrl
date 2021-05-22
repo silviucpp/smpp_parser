@@ -41,6 +41,8 @@
         #octet_string{fixed = Fixed, size = Size, format = undefined}).
 -define(LIST(Type),
         #list{type = Type, size = 255}).
+-define(BINARY(LengthSize, MaxSize),
+		#binary{size_bytes = LengthSize, max_size = MaxSize}).
 -define(COMPOSITE(Name, Tuple),
         #composite{name = Name, tuple = Tuple}).
 -define(UNION(Types),
@@ -112,7 +114,7 @@
             format = fun(Str) -> smpp_common_lib:is_rtime(Str) end}).
 
 %% Sets
--define(EMPTY,     ?UNION([])).
+-define(EMPTY,     ?UNION(<<>>)).
 -define(SET(List), ?UNION(lists:map(fun(C) -> ?CONSTANT(C) end, List))).
 
 
@@ -126,6 +128,8 @@
 -record(octet_string, {fixed, size, format}).
 
 -record(list, {type, size}).
+
+-record(binary, {size_bytes = 1, max_size}).
 
 -record(composite, {name, tuple}).
 

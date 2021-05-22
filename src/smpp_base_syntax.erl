@@ -79,20 +79,20 @@ decode(Binary, #c_octet_string{fixed = true, size = Size} = Type) ->
     Len = Size - 1,
     case Binary of
         <<?NULL_CHARACTER:8, Rest/binary>> ->
-            {ok, "", Rest};
+            {ok, ?NULL_C_OCTET_STRING, Rest};
         <<Value:Len/binary-unit:8, ?NULL_CHARACTER:8, Rest/binary>> ->
-            {ok, binary_to_list(Value), Rest};
+            {ok, Value, Rest};
         <<NotNullTerminated:Size/binary-unit:8, _Rest/binary>> ->
-            {error, {type_mismatch, Type, binary_to_list(NotNullTerminated)}};
+            {error, {type_mismatch, Type, NotNullTerminated}};
         _Mismatch ->
             {error, {type_mismatch, Type, Binary}}
     end;
 decode(Binary, #c_octet_string{fixed = false, size = Size} = Type) ->
     case smpp_common_lib:take_until(Binary, <<?NULL_CHARACTER:8>>, Size) of
         {ok, UntilNull, <<?NULL_CHARACTER:8, Rest/binary>>} ->
-            {ok, binary_to_list(UntilNull), Rest};
+            {ok, UntilNull, Rest};
         {error, {not_found, _Null, UntilSize}} ->
-            {error, {type_mismatch, Type, binary_to_list(UntilSize)}}
+            {error, {type_mismatch, Type, UntilSize}}
     end;
 decode(Binary, #octet_string{format = F} = Type) when F /= undefined ->
     case decode(Binary, Type#octet_string{format = undefined}) of
@@ -109,16 +109,23 @@ decode(Binary, #octet_string{format = F} = Type) when F /= undefined ->
 decode(Binary, #octet_string{fixed = true, size = Size} = Type) ->
     case Binary of
         <<Value:Size/binary-unit:8, Rest/binary>> ->
-            {ok, binary_to_list(Value), Rest};
+            {ok, Value, Rest};
         _Mismatch ->
             {error, {type_mismatch, Type, Binary}}
     end;
 decode(Binary, #octet_string{fixed = false, size = Size}) ->
     case Binary of
         <<Value:Size/binary-unit:8, Rest/binary>> ->
-            {ok, binary_to_list(Value), Rest};
+            {ok, Value, Rest};
         <<Value/binary>> ->
-            {ok, binary_to_list(Value), <<>>}
+            {ok, Value, <<>>}
+    end;
+decode(Binary, #binary{size_bytes = SizeBytes} = Type) ->
+    case Binary of
+        <<Times:SizeBytes/integer-unit:8, Bin:Times/binary, Rest/binary>> ->
+            {ok, Bin, Rest};
+        _Mismatch ->
+            {error, {type_mismatch, Type, Binary}}
     end;
 decode(Binary, #list{type = InnerType, size = Size} = Type) ->
     Len = (Size div 256) + 1,
@@ -231,11 +238,11 @@ encode(Value, #c_octet_string{format = F} = Type) when F /= undefined ->
             {error, {type_mismatch, Type, Value}}
     end;
 encode(Value, #c_octet_string{fixed = true, size = Size})
-  when is_list(Value), (length(Value) == Size - 1) or (length(Value) == 0) ->
-    {ok, list_to_binary(Value ++ [?NULL_CHARACTER])};
+  when is_binary(Value), (byte_size(Value) == Size - 1) or (byte_size(Value) == 0) ->
+    {ok, <<Value/binary, ?NULL_CHARACTER>>};
 encode(Value, #c_octet_string{size = Size})
-  when is_list(Value), length(Value) < Size -> % was =<
-    {ok, list_to_binary(Value ++ [?NULL_CHARACTER])};
+  when is_binary(Value), byte_size(Value) < Size -> % was =<
+    {ok, <<Value/binary, ?NULL_CHARACTER>>};
 encode(Value, #octet_string{format = F} = Type) when F /= undefined ->
     case F(Value) of
         true ->
@@ -244,11 +251,18 @@ encode(Value, #octet_string{format = F} = Type) when F /= undefined ->
             {error, {type_mismatch, Type, Value}}
     end;
 encode(Value, #octet_string{fixed = true, size = Size})
-  when is_list(Value), (length(Value) == Size) or (length(Value) == 0) ->
-    {ok, list_to_binary(Value)};
+  when is_binary(Value), (byte_size(Value) == Size) or (byte_size(Value) == 0) ->
+    {ok, Value};
 encode(Value, #octet_string{size = Size})
-  when is_list(Value), length(Value) =< Size ->
-    {ok, list_to_binary(Value)};
+  when is_binary(Value), byte_size(Value) =< Size ->
+    {ok, Value};
+encode(Value, #binary{max_size = MaxSize, size_bytes = SizeBytes} = Type) ->
+    case is_binary(Value) andalso byte_size(Value) =< MaxSize of
+        true ->
+            {ok, <<(byte_size(Value)):SizeBytes/integer-unit:8, Value/binary>>};
+        _ ->
+            {error, {type_mismatch, Type, Value}}
+    end;
 encode(Values, #list{type = InnerType, size = Size} = Type)
   when is_list(Values), length(Values) =< Size ->
     case encode_iter(Values, InnerType) of

@@ -181,7 +181,7 @@ pack_opts_tlv(Body, Acc) ->
         Tlvs ->
             lists:foldl(
                 fun({T, L, V}, A) ->
-                    [<<T:16, L:16, (list_to_binary(V))/binary>> | A]
+                    [<<T:16, L:16, V/binary>> | A]
                 end, Acc, lists:reverse(Tlvs))
     end.
 
@@ -259,8 +259,7 @@ unpack_opts(<<>>, _OptTypes, Acc) ->
     {ok, Acc};
 unpack_opts(UnusedOpts, [], Acc) ->
     case smpp_param_syntax:chop_tlv(UnusedOpts) of
-        {ok, <<T:16/integer, L:16/integer, VBin/binary>>, RestUnusedOpts} ->
-            V = binary_to_list(VBin),
+        {ok, <<T:16/integer, L:16/integer, V/binary>>, RestUnusedOpts} ->
             unpack_opts(
                 RestUnusedOpts, [],
                 case lists:keytake(tlvs, 1, Acc) of

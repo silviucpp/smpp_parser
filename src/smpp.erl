@@ -12,14 +12,14 @@
 json2internal(SMPP) when is_map(SMPP) ->
     maps:fold(fun(K,V,M) ->
                       AK = b2a(K),
-                      M#{AK => if is_binary(V) -> binary_to_list(V);
+                      M#{AK => if is_binary(V) -> V;
                                   is_list(V) ->
                                       lists:map(fun(VI) when is_map(VI) ->
                                                         json2internal(VI);
                                                    (VI) -> VI
                                                 end, V);
                                   is_map(V) -> json2internal(V);
-                                  V == null -> [];
+                                  V == null -> <<>>;
                                   V == true -> 1;
                                   V == false -> 0;
                                   true -> V
@@ -32,7 +32,7 @@ internal2json(tlvs, TLVs)                  -> [internal2json(V) || V <- TLVs];
 internal2json(_, [M|_] = V) when is_map(M) -> [internal2json(I) || I <- V];
 internal2json(broadcast_area_success, V)   -> V;
 internal2json(broadcast_error_status, V)   -> V;
-internal2json(_, V) when is_list(V)        -> list_to_binary(V);
+internal2json(_, V) when is_list(V)        -> V;
 internal2json(_, V)                        -> V.
 
 pack(#{command_id := CmdId, command_status := Status, sequence_number := SeqNum} = SMPP) ->
@@ -92,7 +92,7 @@ list_to_map({K, V}, Acc) when is_list(V) ->
     end;
 list_to_map({K, V}, Acc) ->
     Acc#{K => V}.
-    
+
 list_to_pl({tlvs, TLVs}, Acc) ->
     [{tlvs, TLVs} | Acc];
 list_to_pl({K, V}, Acc) when is_tuple(V) ->
@@ -109,7 +109,7 @@ list_to_pl({K, V}, Acc) ->
 pl_to_list({tlvs, TLVs}, Acc) ->
     [{tlvs, TLVs} | Acc];
 pl_to_list({K, V}, Acc) when is_list(V) ->
-    case V of 
+    case V of
         [H| _] when is_tuple(H) ->
             [{K, pl_to_rec(K, V)} | Acc];
         [H| _] when is_list(H) ->
@@ -219,8 +219,8 @@ rec_info(dest_subaddress) ->
     record_info(fields, subaddress);
 rec_info(subaddress) ->
     record_info(fields, subaddress);
-rec_info(billing_identification) -> 
-    record_info(fields, billing_identification); 
+rec_info(billing_identification) ->
+    record_info(fields, billing_identification);
 rec_info(Type) ->
     io:format(user, "~p:~p:~p unknown ~p~n", [?MODULE, ?FUNCTION_NAME, ?LINE, Type]),
     [].
@@ -238,7 +238,7 @@ cmdval(Cmd) -> Cmd.
 
 statusstr(Status) when is_integer(Status) ->
     {_, StatusStr, _} = err(Status),
-    list_to_binary(StatusStr).
+    StatusStr.
 
 -spec(encode(PDU :: map()) -> {ok, HEX_STRING :: binary()} | {error, binary()}).
 encode(PDU) when is_map(PDU) ->
@@ -247,7 +247,7 @@ encode(PDU) when is_map(PDU) ->
             {ok,
                 list_to_binary(string:join([string:pad(integer_to_list(B, 16), 2, leading, $0) || <<B>> <= Bin], " "))};
         {error, _, S, _} ->
-            {error, list_to_binary(element(3, err(S)))}
+            {error, element(3, err(S))}
     end;
 encode(_) ->
     {error, <<"Input to encode should be map">>}.
@@ -266,7 +266,7 @@ decode(_) ->
 decode_bin(Bin) when is_binary(Bin) ->
     case unpack_map(Bin) of
         {error, _, S, _} ->
-            {error, list_to_binary(element(3, err(S)))};
+            {error, element(3, err(S))};
         PDU ->
             {ok, internal2json(to_enum(PDU))}
     end.
@@ -672,78 +672,78 @@ b2a(<<"broadcast_frequency_interval">>) -> broadcast_frequency_interval;
 b2a(<<"failed_broadcast_area_identifier">>) -> failed_broadcast_area_identifier;
 b2a(Field) when is_atom(Field) -> Field.
 
-err(?ESME_ROK)->                 {'ESME_ROK',                   "ESME_ROK",                 "No Error"};
-err(?ESME_RINVMSGLEN)->          {'ESME_RINVMSGLEN',            "ESME_RINVMSGLEN",          "Message Length is invalid"};
-err(?ESME_RINVCMDLEN)->          {'ESME_RINVCMDLEN',            "ESME_RINVCMDLEN",          "Command Length is invalid"};
-err(?ESME_RINVCMDID)->           {'ESME_RINVCMDID',             "ESME_RINVCMDID",           "Invalid Command ID"};
-err(?ESME_RINVBNDSTS)->          {'ESME_RINVBNDSTS',            "ESME_RINVBNDSTS",          "Incorrect BIND Status for given command"};
-err(?ESME_RALYBND)->             {'ESME_RALYBND',               "ESME_RALYBND",             "ESME Already in Bound State"};
-err(?ESME_RINVPRTFLG)->          {'ESME_RINVPRTFLG',            "ESME_RINVPRTFLG",          "Invalid Priority Flag"};
-err(?ESME_RINVREGDLVFLG)->       {'ESME_RINVREGDLVFLG',         "ESME_RINVREGDLVFLG",       "Invalid Registered Delivery Flag"};
-err(?ESME_RSYSERR)->             {'ESME_RSYSERR',               "ESME_RSYSERR",             "System Error"};
-err(?ESME_RINVSRCADR)->          {'ESME_RINVSRCADR',            "ESME_RINVSRCADR",          "Invalid Source Address"};
-err(?ESME_RINVDSTADR)->          {'ESME_RINVDSTADR',            "ESME_RINVDSTADR",          "Invalid Dest Addr"};
-err(?ESME_RINVMSGID)->           {'ESME_RINVMSGID',             "ESME_RINVMSGID",           "Message ID is invalid"};
-err(?ESME_RBINDFAIL)->           {'ESME_RBINDFAIL',             "ESME_RBINDFAIL",           "Bind Failed"};
-err(?ESME_RINVPASWD)->           {'ESME_RINVPASWD',             "ESME_RINVPASWD",           "Invalid Password"};
-err(?ESME_RINVSYSID)->           {'ESME_RINVSYSID',             "ESME_RINVSYSID",           "Invalid System ID"};
-err(?ESME_RCANCELFAIL)->         {'ESME_RCANCELFAIL',           "ESME_RCANCELFAIL",         "Cancel SM Failed"};
-err(?ESME_RREPLACEFAIL)->        {'ESME_RREPLACEFAIL',          "ESME_RREPLACEFAIL",        "Replace SM Failed"};
-err(?ESME_RMSGQFUL)->            {'ESME_RMSGQFUL',              "ESME_RMSGQFUL",            "Message Queue Full"};
-err(?ESME_RINVSERTYP)->          {'ESME_RINVSERTYP',            "ESME_RINVSERTYP",          "Invalid Service Type"};
-err(?ESME_RINVNUMDESTS)->        {'ESME_RINVNUMDESTS',          "ESME_RINVNUMDESTS",        "Invalid destinations number"};
-err(?ESME_RINVDLNAME)->          {'ESME_RINVDLNAME',            "ESME_RINVDLNAME",          "Invalid Distribution List name"};
-err(?ESME_RINVDESTFLAG)->        {'ESME_RINVDESTFLAG',          "ESME_RINVDESTFLAG",        "Invalid Destination flag (submit_multi)"};
-err(?ESME_RINVSUBREP)->          {'ESME_RINVSUBREP',            "ESME_RINVSUBREP",          "Invalid submit with replace"};
-err(?ESME_RINVESMCLASS)->        {'ESME_RINVESMCLASS',          "ESME_RINVESMCLASS",        "Invalid esm_class field data"};
-err(?ESME_RCNTSUBDL)->           {'ESME_RCNTSUBDL',             "ESME_RCNTSUBDL",           "Cannot Submit to Distribution List"};
-err(?ESME_RSUBMITFAIL)->         {'ESME_RSUBMITFAIL',           "ESME_RSUBMITFAIL",         "submit_sm or submit_multi failed"};
-err(?ESME_RINVSRCTON)->          {'ESME_RINVSRCTON',            "ESME_RINVSRCTON",          "Invalid Source address TON"};
-err(?ESME_RINVSRCNPI)->          {'ESME_RINVSRCNPI',            "ESME_RINVSRCNPI",          "Invalid Source address NPI"};
-err(?ESME_RINVDSTTON)->          {'ESME_RINVDSTTON',            "ESME_RINVDSTTON",          "Invalid Destination addr TON"};
-err(?ESME_RINVDSTNPI)->          {'ESME_RINVDSTNPI',            "ESME_RINVDSTNPI",          "Invalid Destination addr NPI"};
-err(?ESME_RINVSYSTYP)->          {'ESME_RINVSYSTYP',            "ESME_RINVSYSTYP",          "Invalid system_type field"};
-err(?ESME_RINVREPFLAG)->         {'ESME_RINVREPFLAG',           "ESME_RINVREPFLAG",         "Invalid replace_if_present Flag"};
-err(?ESME_RINVNUMMSGS)->         {'ESME_RINVNUMMSGS',           "ESME_RINVNUMMSGS",         "Invalid number of messages"};
-err(?ESME_RTHROTTLED)->          {'ESME_RTHROTTLED',            "ESME_RTHROTTLED",          "Throttling error (ESME has exceeded allowed msg limits)"};
-err(?ESME_RINVSCHED)->           {'ESME_RINVSCHED',             "ESME_RINVSCHED",           "Invalid Scheduled Delivery Time"};
-err(?ESME_RINVEXPIRY)->          {'ESME_RINVEXPIRY',            "ESME_RINVEXPIRY",          "Invalid message validity period (Expiry time)"};
-err(?ESME_RINVDFTMSGID)->        {'ESME_RINVDFTMSGID',          "ESME_RINVDFTMSGID",        "Predefined Message Invalid or Not Found"};
-err(?ESME_RX_T_APPN)->           {'ESME_RX_T_APPN',             "ESME_RX_T_APPN",           "ESME Receiver Temporary App Err"};
-err(?ESME_RX_P_APPN)->           {'ESME_RX_P_APPN',             "ESME_RX_P_APPN",           "ESME Receiver Permanent App Err"};
-err(?ESME_RX_R_APPN)->           {'ESME_RX_R_APPN',             "ESME_RX_R_APPN",           "ESME Receiver Reject Message"};
-err(?ESME_RQUERYFAIL)->          {'ESME_RQUERYFAIL',            "ESME_RQUERYFAIL",          "query_sm request failed"};
-err(?ESME_RINVTLVSTREAM)->       {'ESME_RINVTLVSTREAM',         "ESME_RINVTLVSTREAM",       "Error in the optional part of the PDU Body"};
-err(?ESME_RTLVNOTALLWD)->        {'ESME_RTLVNOTALLWD',          "ESME_RTLVNOTALLWD",        "TLV not allowed"};
-err(?ESME_RINVTLVLEN)->          {'ESME_RINVTLVLEN',            "ESME_RINVTLVLEN",          "Invalid Parameter Length"};
-err(?ESME_RMISSINGTLV)->         {'ESME_RMISSINGTLV',           "ESME_RMISSINGTLV",         "Expected TLV missing"};
-err(?ESME_RINVTLVVAL)->          {'ESME_RINVTLVVAL',            "ESME_RINVTLVVAL",          "Invalid TLV Value"};
-err(?ESME_RDELIVERYFAILURE)->    {'ESME_RDELIVERYFAILURE',      "ESME_RDELIVERYFAILURE",    "Transaction Delivery Failure"};
-err(?ESME_RUNKNOWNERR)->         {'ESME_RUNKNOWNERR',           "ESME_RUNKNOWNERR",         "Unknown Error"};
-err(?ESME_RSERTYPUNAUTH)->       {'ESME_RSERTYPUNAUTH',         "ESME_RSERTYPUNAUTH",       "ESME Not authorised to use specified service_type"};
-err(?ESME_RPROHIBITED)->         {'ESME_RPROHIBITED',           "ESME_RPROHIBITED",         "ESME Prohibited from using specified operation"};
-err(?ESME_RSERTYPUNAVAIL)->      {'ESME_RSERTYPUNAVAIL',        "ESME_RSERTYPUNAVAIL",      "Specified service_type is unavailable"};
-err(?ESME_RSERTYPDENIED)->       {'ESME_RSERTYPDENIED',         "ESME_RSERTYPDENIED",       "Specified service_type denied"};
-err(?ESME_RINVDCS)->             {'ESME_RINVDCS',               "ESME_RINVDCS",             "Invalid Data Coding Scheme"};
-err(?ESME_RINVSRCADDRSUBUNIT)->  {'ESME_RINVSRCADDRSUBUNIT',    "ESME_RINVSRCADDRSUBUNIT",  "Source Address Sub unit is invalid"};
-err(?ESME_RINVDSTADDRSUBUNIT)->  {'ESME_RINVDSTADDRSUBUNIT',    "ESME_RINVDSTADDRSUBUNIT",  "Destination Address Sub unit is invalid"};
-err(?ESME_RINVBCASTFREQINT)->    {'ESME_RINVBCASTFREQINT',      "ESME_RINVBCASTFREQINT",    "Broadcast Frequency Interval is invalid"};
-err(?ESME_RINVBCASTALIAS_NAME)-> {'ESME_RINVBCASTALIAS_NAME',   "ESME_RINVBCASTALIAS_NAME", "Invalid Broadcast Alias Name"};
-err(?ESME_RINVBCASTAREAFMT)->    {'ESME_RINVBCASTAREAFMT',      "ESME_RINVBCASTAREAFMT",    "Invalid Broadcast Area Format"};
-err(?ESME_RINVNUMBCAST_AREAS)->  {'ESME_RINVNUMBCAST_AREAS',    "ESME_RINVNUMBCAST_AREAS",  "Number of Broadcast Areas is invalid"};
-err(?ESME_RINVBCASTCNTTYPE)->    {'ESME_RINVBCASTCNTTYPE',      "ESME_RINVBCASTCNTTYPE",    "Invalid Broadcast Content Type"};
-err(?ESME_RINVBCASTMSGCLASS)->   {'ESME_RINVBCASTMSGCLASS',     "ESME_RINVBCASTMSGCLASS",   "Broadcast Message Class is invalid"};
-err(?ESME_RBCASTFAIL)->          {'ESME_RBCASTFAIL',            "ESME_RBCASTFAIL",          "broadcast_sm operation failed"};
-err(?ESME_RBCASTQUERYFAIL)->     {'ESME_RBCASTQUERYFAIL',       "ESME_RBCASTQUERYFAIL",     "query_broadcast_sm failed"};
-err(?ESME_RBCASTCANCELFAIL)->    {'ESME_RBCASTCANCELFAIL',      "ESME_RBCASTCANCELFAIL",    "cancel_broadcast_sm failed"};
-err(?ESME_RINVBCAST_REP)->       {'ESME_RINVBCAST_REP',         "ESME_RINVBCAST_REP",       "Number of Repeated Broadcasts is invalid"};
-err(?ESME_RINVBCASTSRVGRP)->     {'ESME_RINVBCASTSRVGRP',       "ESME_RINVBCASTSRVGRP",     "Broadcast Service Group is invalid"};
-err(?ESME_RINVBCASTCHANIND)->    {'ESME_RINVBCASTCHANIND',      "ESME_RINVBCASTCHANIND",    "Broadcast Channel Indicator is invalid"};
-%err(?ESME_RINVOPTPARSTREAM)->    {'ESME_RINVOPTPARSTREAM',      "ESME_RINVOPTPARSTREAM",    "Error in the optional part of the PDU Body"};
-%err(?ESME_ROPTPARNOTALLWD)->     {'ESME_ROPTPARNOTALLWD',       "ESME_ROPTPARNOTALLWD",     "Optional Parameter not allowed"};
-%err(?ESME_RINVPARLEN)->          {'ESME_RINVPARLEN',            "ESME_RINVPARLEN",          "Invalid Parameter Length"};
-%err(?ESME_RMISSINGOPTPARAM)->    {'ESME_RMISSINGOPTPARAM',      "ESME_RMISSINGOPTPARAM",    "Expected Optional Parameter missing"};
-%err(?ESME_RINVOPTPARAMVAL)->     {'ESME_RINVOPTPARAMVAL',       "ESME_RINVOPTPARAMVAL",     "Invalid Optional Parameter Value"}.
+err(?ESME_ROK)->                 {'ESME_ROK',                   <<"ESME_ROK">>,                 <<"No Error">>};
+err(?ESME_RINVMSGLEN)->          {'ESME_RINVMSGLEN',            <<"ESME_RINVMSGLEN">>,          <<"Message Length is invalid">>};
+err(?ESME_RINVCMDLEN)->          {'ESME_RINVCMDLEN',            <<"ESME_RINVCMDLEN">>,          <<"Command Length is invalid">>};
+err(?ESME_RINVCMDID)->           {'ESME_RINVCMDID',             <<"ESME_RINVCMDID">>,           <<"Invalid Command ID">>};
+err(?ESME_RINVBNDSTS)->          {'ESME_RINVBNDSTS',            <<"ESME_RINVBNDSTS">>,          <<"Incorrect BIND Status for given command">>};
+err(?ESME_RALYBND)->             {'ESME_RALYBND',               <<"ESME_RALYBND">>,             <<"ESME Already in Bound State">>};
+err(?ESME_RINVPRTFLG)->          {'ESME_RINVPRTFLG',            <<"ESME_RINVPRTFLG">>,          <<"Invalid Priority Flag">>};
+err(?ESME_RINVREGDLVFLG)->       {'ESME_RINVREGDLVFLG',         <<"ESME_RINVREGDLVFLG">>,       <<"Invalid Registered Delivery Flag">>};
+err(?ESME_RSYSERR)->             {'ESME_RSYSERR',               <<"ESME_RSYSERR">>,             <<"System Error">>};
+err(?ESME_RINVSRCADR)->          {'ESME_RINVSRCADR',            <<"ESME_RINVSRCADR">>,          <<"Invalid Source Address">>};
+err(?ESME_RINVDSTADR)->          {'ESME_RINVDSTADR',            <<"ESME_RINVDSTADR">>,          <<"Invalid Dest Addr">>};
+err(?ESME_RINVMSGID)->           {'ESME_RINVMSGID',             <<"ESME_RINVMSGID">>,           <<"Message ID is invalid">>};
+err(?ESME_RBINDFAIL)->           {'ESME_RBINDFAIL',             <<"ESME_RBINDFAIL">>,           <<"Bind Failed">>};
+err(?ESME_RINVPASWD)->           {'ESME_RINVPASWD',             <<"ESME_RINVPASWD">>,           <<"Invalid Password">>};
+err(?ESME_RINVSYSID)->           {'ESME_RINVSYSID',             <<"ESME_RINVSYSID">>,           <<"Invalid System ID">>};
+err(?ESME_RCANCELFAIL)->         {'ESME_RCANCELFAIL',           <<"ESME_RCANCELFAIL">>,         <<"Cancel SM Failed">>};
+err(?ESME_RREPLACEFAIL)->        {'ESME_RREPLACEFAIL',          <<"ESME_RREPLACEFAIL">>,        <<"Replace SM Failed">>};
+err(?ESME_RMSGQFUL)->            {'ESME_RMSGQFUL',              <<"ESME_RMSGQFUL">>,            <<"Message Queue Full">>};
+err(?ESME_RINVSERTYP)->          {'ESME_RINVSERTYP',            <<"ESME_RINVSERTYP">>,          <<"Invalid Service Type">>};
+err(?ESME_RINVNUMDESTS)->        {'ESME_RINVNUMDESTS',          <<"ESME_RINVNUMDESTS">>,        <<"Invalid destinations number">>};
+err(?ESME_RINVDLNAME)->          {'ESME_RINVDLNAME',            <<"ESME_RINVDLNAME">>,          <<"Invalid Distribution List name">>};
+err(?ESME_RINVDESTFLAG)->        {'ESME_RINVDESTFLAG',          <<"ESME_RINVDESTFLAG">>,        <<"Invalid Destination flag (submit_multi)">>};
+err(?ESME_RINVSUBREP)->          {'ESME_RINVSUBREP',            <<"ESME_RINVSUBREP">>,          <<"Invalid submit with replace">>};
+err(?ESME_RINVESMCLASS)->        {'ESME_RINVESMCLASS',          <<"ESME_RINVESMCLASS">>,        <<"Invalid esm_class field data">>};
+err(?ESME_RCNTSUBDL)->           {'ESME_RCNTSUBDL',             <<"ESME_RCNTSUBDL">>,           <<"Cannot Submit to Distribution List">>};
+err(?ESME_RSUBMITFAIL)->         {'ESME_RSUBMITFAIL',           <<"ESME_RSUBMITFAIL">>,         <<"submit_sm or submit_multi failed">>};
+err(?ESME_RINVSRCTON)->          {'ESME_RINVSRCTON',            <<"ESME_RINVSRCTON">>,          <<"Invalid Source address TON">>};
+err(?ESME_RINVSRCNPI)->          {'ESME_RINVSRCNPI',            <<"ESME_RINVSRCNPI">>,          <<"Invalid Source address NPI">>};
+err(?ESME_RINVDSTTON)->          {'ESME_RINVDSTTON',            <<"ESME_RINVDSTTON">>,          <<"Invalid Destination addr TON">>};
+err(?ESME_RINVDSTNPI)->          {'ESME_RINVDSTNPI',            <<"ESME_RINVDSTNPI">>,          <<"Invalid Destination addr NPI">>};
+err(?ESME_RINVSYSTYP)->          {'ESME_RINVSYSTYP',            <<"ESME_RINVSYSTYP">>,          <<"Invalid system_type field">>};
+err(?ESME_RINVREPFLAG)->         {'ESME_RINVREPFLAG',           <<"ESME_RINVREPFLAG">>,         <<"Invalid replace_if_present Flag">>};
+err(?ESME_RINVNUMMSGS)->         {'ESME_RINVNUMMSGS',           <<"ESME_RINVNUMMSGS">>,         <<"Invalid number of messages">>};
+err(?ESME_RTHROTTLED)->          {'ESME_RTHROTTLED',            <<"ESME_RTHROTTLED">>,          <<"Throttling error (ESME has exceeded allowed msg limits)">>};
+err(?ESME_RINVSCHED)->           {'ESME_RINVSCHED',             <<"ESME_RINVSCHED">>,           <<"Invalid Scheduled Delivery Time">>};
+err(?ESME_RINVEXPIRY)->          {'ESME_RINVEXPIRY',            <<"ESME_RINVEXPIRY">>,          <<"Invalid message validity period (Expiry time)">>};
+err(?ESME_RINVDFTMSGID)->        {'ESME_RINVDFTMSGID',          <<"ESME_RINVDFTMSGID">>,        <<"Predefined Message Invalid or Not Found">>};
+err(?ESME_RX_T_APPN)->           {'ESME_RX_T_APPN',             <<"ESME_RX_T_APPN">>,           <<"ESME Receiver Temporary App Err">>};
+err(?ESME_RX_P_APPN)->           {'ESME_RX_P_APPN',             <<"ESME_RX_P_APPN">>,           <<"ESME Receiver Permanent App Err">>};
+err(?ESME_RX_R_APPN)->           {'ESME_RX_R_APPN',             <<"ESME_RX_R_APPN">>,           <<"ESME Receiver Reject Message">>};
+err(?ESME_RQUERYFAIL)->          {'ESME_RQUERYFAIL',            <<"ESME_RQUERYFAIL">>,          <<"query_sm request failed">>};
+err(?ESME_RINVTLVSTREAM)->       {'ESME_RINVTLVSTREAM',         <<"ESME_RINVTLVSTREAM">>,       <<"Error in the optional part of the PDU Body">>};
+err(?ESME_RTLVNOTALLWD)->        {'ESME_RTLVNOTALLWD',          <<"ESME_RTLVNOTALLWD">>,        <<"TLV not allowed">>};
+err(?ESME_RINVTLVLEN)->          {'ESME_RINVTLVLEN',            <<"ESME_RINVTLVLEN">>,          <<"Invalid Parameter Length">>};
+err(?ESME_RMISSINGTLV)->         {'ESME_RMISSINGTLV',           <<"ESME_RMISSINGTLV">>,         <<"Expected TLV missing">>};
+err(?ESME_RINVTLVVAL)->          {'ESME_RINVTLVVAL',            <<"ESME_RINVTLVVAL">>,          <<"Invalid TLV Value">>};
+err(?ESME_RDELIVERYFAILURE)->    {'ESME_RDELIVERYFAILURE',      <<"ESME_RDELIVERYFAILURE">>,    <<"Transaction Delivery Failure">>};
+err(?ESME_RUNKNOWNERR)->         {'ESME_RUNKNOWNERR',           <<"ESME_RUNKNOWNERR">>,         <<"Unknown Error">>};
+err(?ESME_RSERTYPUNAUTH)->       {'ESME_RSERTYPUNAUTH',         <<"ESME_RSERTYPUNAUTH">>,       <<"ESME Not authorised to use specified service_type">>};
+err(?ESME_RPROHIBITED)->         {'ESME_RPROHIBITED',           <<"ESME_RPROHIBITED">>,         <<"ESME Prohibited from using specified operation">>};
+err(?ESME_RSERTYPUNAVAIL)->      {'ESME_RSERTYPUNAVAIL',        <<"ESME_RSERTYPUNAVAIL">>,      <<"Specified service_type is unavailable">>};
+err(?ESME_RSERTYPDENIED)->       {'ESME_RSERTYPDENIED',         <<"ESME_RSERTYPDENIED">>,       <<"Specified service_type denied">>};
+err(?ESME_RINVDCS)->             {'ESME_RINVDCS',               <<"ESME_RINVDCS">>,             <<"Invalid Data Coding Scheme">>};
+err(?ESME_RINVSRCADDRSUBUNIT)->  {'ESME_RINVSRCADDRSUBUNIT',    <<"ESME_RINVSRCADDRSUBUNIT">>,  <<"Source Address Sub unit is invalid">>};
+err(?ESME_RINVDSTADDRSUBUNIT)->  {'ESME_RINVDSTADDRSUBUNIT',    <<"ESME_RINVDSTADDRSUBUNIT">>,  <<"Destination Address Sub unit is invalid">>};
+err(?ESME_RINVBCASTFREQINT)->    {'ESME_RINVBCASTFREQINT',      <<"ESME_RINVBCASTFREQINT">>,    <<"Broadcast Frequency Interval is invalid">>};
+err(?ESME_RINVBCASTALIAS_NAME)-> {'ESME_RINVBCASTALIAS_NAME',   <<"ESME_RINVBCASTALIAS_NAME">>, <<"Invalid Broadcast Alias Name">>};
+err(?ESME_RINVBCASTAREAFMT)->    {'ESME_RINVBCASTAREAFMT',      <<"ESME_RINVBCASTAREAFMT">>,    <<"Invalid Broadcast Area Format">>};
+err(?ESME_RINVNUMBCAST_AREAS)->  {'ESME_RINVNUMBCAST_AREAS',    <<"ESME_RINVNUMBCAST_AREAS">>,  <<"Number of Broadcast Areas is invalid">>};
+err(?ESME_RINVBCASTCNTTYPE)->    {'ESME_RINVBCASTCNTTYPE',      <<"ESME_RINVBCASTCNTTYPE">>,    <<"Invalid Broadcast Content Type">>};
+err(?ESME_RINVBCASTMSGCLASS)->   {'ESME_RINVBCASTMSGCLASS',     <<"ESME_RINVBCASTMSGCLASS">>,   <<"Broadcast Message Class is invalid">>};
+err(?ESME_RBCASTFAIL)->          {'ESME_RBCASTFAIL',            <<"ESME_RBCASTFAIL">>,          <<"broadcast_sm operation failed">>};
+err(?ESME_RBCASTQUERYFAIL)->     {'ESME_RBCASTQUERYFAIL',       <<"ESME_RBCASTQUERYFAIL">>,     <<"query_broadcast_sm failed">>};
+err(?ESME_RBCASTCANCELFAIL)->    {'ESME_RBCASTCANCELFAIL',      <<"ESME_RBCASTCANCELFAIL">>,    <<"cancel_broadcast_sm failed">>};
+err(?ESME_RINVBCAST_REP)->       {'ESME_RINVBCAST_REP',         <<"ESME_RINVBCAST_REP">>,       <<"Number of Repeated Broadcasts is invalid">>};
+err(?ESME_RINVBCASTSRVGRP)->     {'ESME_RINVBCASTSRVGRP',       <<"ESME_RINVBCASTSRVGRP">>,     <<"Broadcast Service Group is invalid">>};
+err(?ESME_RINVBCASTCHANIND)->    {'ESME_RINVBCASTCHANIND',      <<"ESME_RINVBCASTCHANIND">>,    <<"Broadcast Channel Indicator is invalid">>};
+%err(?ESME_RINVOPTPARSTREAM)->    {'ESME_RINVOPTPARSTREAM',      <<"ESME_RINVOPTPARSTREAM">>,    <<"Error in the optional part of the PDU Body">>};
+%err(?ESME_ROPTPARNOTALLWD)->     {'ESME_ROPTPARNOTALLWD',       <<"ESME_ROPTPARNOTALLWD">>,     <<"Optional Parameter not allowed">>};
+%err(?ESME_RINVPARLEN)->          {'ESME_RINVPARLEN',            <<"ESME_RINVPARLEN">>,          <<"Invalid Parameter Length">>};
+%err(?ESME_RMISSINGOPTPARAM)->    {'ESME_RMISSINGOPTPARAM',      <<"ESME_RMISSINGOPTPARAM">>,    <<"Expected Optional Parameter missing">>};
+%err(?ESME_RINVOPTPARAMVAL)->     {'ESME_RINVOPTPARAMVAL',       <<"ESME_RINVOPTPARAMVAL">>,     <<"Invalid Optional Parameter Value"}.
 err(<<"ESME_ROK">>)                 -> ?ESME_ROK;
 err(<<"ESME_RINVMSGLEN">>)          -> ?ESME_RINVMSGLEN;
 err(<<"ESME_RINVCMDLEN">>)          -> ?ESME_RINVCMDLEN;
@@ -851,7 +851,7 @@ info() ->
                                                 #{number => 0, time_unit => 0},
                                               broadcast_rep_num => 0},
           submit_multi              => ?BASE(cmd(submit_multi))
-                                                    #{dest_address => <<>>},
+                                                    #{dest_address => []},
 
           unbind_resp               => ?BASE(cmd(unbind_resp)),
           data_sm_resp              => ?BASE(cmd(data_sm_resp)),
@@ -868,7 +868,7 @@ info() ->
           bind_transceiver_resp     => ?M_SYS_ID(cmd(bind_transceiver_resp)),
           bind_transmitter_resp     => ?M_SYS_ID(cmd(bind_transmitter_resp)),
           submit_multi_resp         => ?BASE(cmd(submit_multi_resp))
-                                                       #{unsuccess_sme => <<>>},
+                                                       #{unsuccess_sme => []},
           query_broadcast_sm_resp   => ?BASE(cmd(query_broadcast_sm_resp))
                                                     #{broadcast_area_identifier =>
                                                         [#{details => <<>>, format => 0}],

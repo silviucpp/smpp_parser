@@ -7,6 +7,8 @@
 -export([take_until/3]).
 -export([ukeymerge/3]).
 
+is_hex(V) when is_binary(V) ->
+    is_hex(binary_to_list(V));
 is_hex([]) ->
     true;
 is_hex([Digit|Rest]) when (Digit >= 47) and (Digit =< 57);
@@ -16,6 +18,8 @@ is_hex([Digit|Rest]) when (Digit >= 47) and (Digit =< 57);
 is_hex(_String) ->
     false.
 
+is_dec(V) when is_binary(V) ->
+    is_dec(binary_to_list(V));
 is_dec([]) ->
     true;
 is_dec([Digit|Rest]) when (Digit >= 48) and (Digit =< 57) ->
@@ -23,6 +27,8 @@ is_dec([Digit|Rest]) when (Digit >= 48) and (Digit =< 57) ->
 is_dec(_String) ->
     false.
 
+is_atime(V) when is_binary(V) ->
+    is_atime(binary_to_list(V));
 is_atime([]) ->
     true;
 is_atime([Y1,Y2,M1,M2,D1,D2,H1,H2,Min1,Min2,S1,S2,T,N1,N2,P]) when P == $+;
@@ -48,7 +54,8 @@ is_atime([Y1,Y2,M1,M2,D1,D2,H1,H2,Min1,Min2,S1,S2,T,N1,N2,P]) when P == $+;
 is_atime(_String) ->
     false.
 
-
+is_rtime(V) when is_binary(V) ->
+    is_rtime(binary_to_list(V));
 is_rtime([]) ->
     true;
 is_rtime([Y1,Y2,M1,M2,D1,D2,H1,H2,Min1,Min2,S1,S2,$0,$0,$0,$R]) ->

@@ -9,3 +9,5 @@ tmp
 .rebar
 ebin/
 .rebar3/
+/.idea/
+/smpp_parser.iml

@@ -131,7 +131,7 @@
     source_addr => <<"142.25.95.68">>, source_addr_npi => <<"National">>,
     source_addr_ton => <<"International">>}},
   {"data_sm_resp_dpf_result",
-   "00 00 00 30 80 00 01 03 00 00 00 00 00 00 00 01 74 68 69 73 5F 63 6F 75 6C "  
+   "00 00 00 30 80 00 01 03 00 00 00 00 00 00 00 01 74 68 69 73 5F 63 6F 75 6C "
    "64 5F 62 65 5F 61 5F 6D 65 73 73 61 67 65 5F 69 64 00 04 20 00 01 00",
    #{command_id => <<"data_sm_resp">>, command_length => 48,
      command_status => <<"ESME_ROK">>,dpf_result => 0,
@@ -147,9 +147,9 @@
      source_addr => <<"127.0.0.1">>, source_addr_npi => <<"Telex (F.69)">>,
      source_addr_ton => <<"National">>}},
   {"submit_sm_resp_additional_status_info_text",
-   "00 00 00 53 80 00 00 04 00 00 00 00 00 00 00 01 74 68 69 73 5F 63 6F 75 6C "  
-   "64 5F 62 65 5F 61 5F 6D 65 73 73 61 67 65 5F 69 64 00 00 1D 00 1F 6D 79 5F "  
-   "61 64 64 69 74 69 6F 6E 61 6C 5F 73 74 61 74 75 73 5F 69 6E 66 6F 5F 74 65 "  
+   "00 00 00 53 80 00 00 04 00 00 00 00 00 00 00 01 74 68 69 73 5F 63 6F 75 6C "
+   "64 5F 62 65 5F 61 5F 6D 65 73 73 61 67 65 5F 69 64 00 00 1D 00 1F 6D 79 5F "
+   "61 64 64 69 74 69 6F 6E 61 6C 5F 73 74 61 74 75 73 5F 69 6E 66 6F 5F 74 65 "
    "78 74 00 04 25 00 01 01",
    #{additional_status_info_text => <<"my_additional_status_info_text">>,
      command_id => <<"submit_sm_resp">>, command_length => 83,
@@ -162,7 +162,7 @@
    #{command_id => <<"submit_multi_resp">>, command_length => 54,
      command_status => <<"ESME_ROK">>, delivery_failure_reason => 2,
      dpf_result => 1, message_id => <<"this_could_be_a_message_id">>,
-     sequence_number => 1, unsuccess_sme => <<>>}},
+     sequence_number => 1, unsuccess_sme => []}},
   {"data_sm_dest_addr_np_country",
    "00 00 00 39 00 00 01 03 00 00 00 00 00 00 00 01 43 4D 54 00 05 04 31 39 32 "
    "2E 31 36 38 2E 31 2E 31 00 03 0A 31 39 32 2E 31 36 38 2E 31 2E 31 00 C0 00 "
@@ -222,7 +222,7 @@
         [#{details => <<"my_broadcast_area_identifier_00007">>, format => 1}],
      broadcast_content_type => #{network_type => 0,service => 51},
      broadcast_frequency_interval => #{number => 3,time_unit => 8},
-     broadcast_rep_num => 0, callback_num_pres_ind => <<"\v">>,
+     broadcast_rep_num => 0, callback_num_pres_ind => "\v",
      message_id => <<"this_could_be_a_message_id">>, priority_flag => 4,
      replace_if_present_flag => 0,
      schedule_delivery_time => <<"990724175444000R">>, sequence_number => 1,
@@ -561,7 +561,7 @@
    #{additional_status_info_text => <<"my_additional_status_info_text">>,
      command_id => <<"submit_multi_resp">>, command_length => 84,
      command_status => <<"ESME_ROK">>, dpf_result => 0, sequence_number => 1,
- 	 message_id => <<"this_could_be_a_message_id">>, unsuccess_sme => <<>>}},
+ 	 message_id => <<"this_could_be_a_message_id">>, unsuccess_sme => []}},
   {"data_sm_resp_#74",
    "00 00 00 53 80 00 01 03 00 00 00 00 00 00 00 01 74 68 69 73 5F 63 6F 75 "
    "6C 64 5F 62 65 5F 61 5F 6D 65 73 73 61 67 65 5F 69 64 00 00 1D 00 1F 6D "
@@ -795,7 +795,7 @@
      command_status => <<"ESME_ROK">>, replace_if_present_flag => 0,
      data_coding => <<"Latin/Hebrew (ISO-8859-8)">>,
      dest_addr_npi => <<"Unknown">>, dest_addr_ton => <<"International">>,
-     dest_subaddress => #{data => "user_specified_55",tag => 160},
+     dest_subaddress => #{data => <<"user_specified_55">>,tag => 160},
      destination_addr => <<"168.123.234.321">>, esm_class => 128,
      priority_flag => 4, protocol_id => 31, registered_delivery => 4,
      source_addr_npi => <<"Land Mobile (E.212)">>, sequence_number => 1,
@@ -827,7 +827,7 @@
    "30 30 30 30 52 00 39 39 30 32 30 31 30 30 30 30 30 30 30 30 30 52 00 10 "
    "00 7F 02 0F 54 68 69 73 20 69 73 20 61 20 73 68 6F 72 74 03 02 00 01 00 "
    "05 01 00 01 13",
-   #{callback_num_pres_ind => <<0>>, command_id => <<"submit_multi">>,
+   #{callback_num_pres_ind => [0], command_id => <<"submit_multi">>,
      command_length => 173, command_status => <<"ESME_ROK">>,
      data_coding => <<"127">>, dest_address => [
         #{dest_addr_npi => 4,dest_addr_ton => 3,dest_flag => 1,
@@ -897,7 +897,7 @@
    "00 00 00 46 00 00 01 03 00 00 00 00 00 00 00 01 47 55 54 53 00 04 03 31 "
    "36 38 2E 31 32 33 2E 32 33 34 2E 33 32 31 00 01 09 31 36 38 2E 31 32 33 "
    "2E 32 33 34 2E 33 32 31 00 10 04 02 03 02 00 01 00 05 01 00 01 13",
-   #{callback_num_pres_ind => <<0>>, command_id => <<"data_sm">>,
+   #{callback_num_pres_ind => [0], command_id => <<"data_sm">>,
      command_length => 70, command_status => <<"ESME_ROK">>,
      data_coding => <<"Octet unspecified (8-bit binary)">>,
      dest_addr_npi => <<"Private">>, dest_addr_ton => <<"International">>,
@@ -981,24 +981,24 @@
 ]).
 
 -define(ENOCDE_MSG_DECODE_MSG_TEST,
-    [{"empty", 
+    [{"empty",
       #{short_message => <<>>, data_coding => ?ENCODING_SCHEME_LATIN_1},
       #{short_message => <<>>, data_coding => ?ENCODING_SCHEME_LATIN_1}},
-     {"empty_ucs2", 
+     {"empty_ucs2",
       #{short_message => <<>>, data_coding => ?ENCODING_SCHEME_UCS2},
       #{short_message => <<>>, data_coding => ?ENCODING_SCHEME_UCS2}},
-     {"ucs2_bigger_eur", 
+     {"ucs2_bigger_eur",
       #{data_coding => ?ENCODING_SCHEME_UCS2, short_message => <<"Abc₭"/utf8>>},
-      #{data_coding => ?ENCODING_SCHEME_UCS2, 
+      #{data_coding => ?ENCODING_SCHEME_UCS2,
         short_message => unicode:characters_to_binary(<<"Abc₭"/utf8>>, utf8, utf16)}},
-     {"base64", 
+     {"base64",
       #{data_coding => ?ENCODING_SCHEME_MC_SPECIFIC, short_message => <<"Test">>},
       #{data_coding => ?ENCODING_SCHEME_MC_SPECIFIC, short_message => <<"Test">>}}
    ]
 ).
 
 -define(EMOJI_TEST, %[{Title, Object, Expected}]
-    [{"1-part all emojis", 
+    [{"1-part all emojis",
       #{command_id => <<"submit_sm">>,command_length => 33,
         command_status => <<"ESME_ROK">>,
         data_coding => <<"UCS2 (ISO/IEC-10646)">>,

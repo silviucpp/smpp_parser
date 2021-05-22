@@ -261,29 +261,29 @@
                    {?SUBADDRESS_TAG_RESERVED,
                     ?SUBADDRESS_DATA_RESERVED})).
 
-%% A billing_identification value should be defined using the billing_identification record. 
-%% The first octet represents the Billing Format tag and indicates the 
-%% format of the billing information in the remaining octets. 
--define(BILLING_IDENTIFICATION_TAG_DATATYPE, ?INTEGER(1)). 
--define(BILLING_IDENTIFICATION_TAG_DOMAIN,   ?INTEGER(1)). 
--define(BILLING_IDENTIFICATION_TAG_RESERVED, ?EMPTY). 
- 
--define(BILLING_IDENTIFICATION_DATA_DATATYPE, ?VAR_OCTET_STRING(1023)). 
--define(BILLING_IDENTIFICATION_DATA_DOMAIN,   ?VAR_OCTET_STRING(1023)). 
--define(BILLING_IDENTIFICATION_DATA_RESERVED, ?EMPTY). 
- 
--define(BILLING_IDENTIFICATION_DATATYPE, 
-        ?COMPOSITE(billing_identification, 
-                   {?BILLING_IDENTIFICATION_TAG_DATATYPE, 
-                    ?BILLING_IDENTIFICATION_DATA_DATATYPE})). 
--define(BILLING_IDENTIFICATION_DOMAIN, 
-        ?COMPOSITE(billing_identification, 
-                   {?BILLING_IDENTIFICATION_TAG_DOMAIN, 
-                    ?BILLING_IDENTIFICATION_DATA_DOMAIN})). 
--define(BILLING_IDENTIFICATION_RESERVED, 
-        ?COMPOSITE(billing_identification, 
-                   {?BILLING_IDENTIFICATION_TAG_RESERVED, 
-                    ?BILLING_IDENTIFICATION_DATA_RESERVED})). 
+%% A billing_identification value should be defined using the billing_identification record.
+%% The first octet represents the Billing Format tag and indicates the
+%% format of the billing information in the remaining octets.
+-define(BILLING_IDENTIFICATION_TAG_DATATYPE, ?INTEGER(1)).
+-define(BILLING_IDENTIFICATION_TAG_DOMAIN,   ?INTEGER(1)).
+-define(BILLING_IDENTIFICATION_TAG_RESERVED, ?EMPTY).
+
+-define(BILLING_IDENTIFICATION_DATA_DATATYPE, ?VAR_OCTET_STRING(1023)).
+-define(BILLING_IDENTIFICATION_DATA_DOMAIN,   ?VAR_OCTET_STRING(1023)).
+-define(BILLING_IDENTIFICATION_DATA_RESERVED, ?EMPTY).
+
+-define(BILLING_IDENTIFICATION_DATATYPE,
+        ?COMPOSITE(billing_identification,
+                   {?BILLING_IDENTIFICATION_TAG_DATATYPE,
+                    ?BILLING_IDENTIFICATION_DATA_DATATYPE})).
+-define(BILLING_IDENTIFICATION_DOMAIN,
+        ?COMPOSITE(billing_identification,
+                   {?BILLING_IDENTIFICATION_TAG_DOMAIN,
+                    ?BILLING_IDENTIFICATION_DATA_DOMAIN})).
+-define(BILLING_IDENTIFICATION_RESERVED,
+        ?COMPOSITE(billing_identification,
+                   {?BILLING_IDENTIFICATION_TAG_RESERVED,
+                    ?BILLING_IDENTIFICATION_DATA_RESERVED})).
 
 %% A telematics_id value must be defined using the telematics_id record.
 %%
@@ -500,8 +500,8 @@
 -define(SERVICE_TYPE_DOMAIN,   ?VAR_C_OCTET_STRING(6)).
 -define(SERVICE_TYPE_RESERVED, ?EMPTY).
 
--define(SHORT_MESSAGE_DATATYPE, ?LIST(?INTEGER(1))).
--define(SHORT_MESSAGE_DOMAIN,   ?LIST(?INTEGER(1))).
+-define(SHORT_MESSAGE_DATATYPE, ?BINARY(1, 255)).
+-define(SHORT_MESSAGE_DOMAIN,   ?BINARY(1, 255)).
 -define(SHORT_MESSAGE_RESERVED, ?EMPTY).
 
 -define(SM_DEFAULT_MSG_ID_DATATYPE, ?INTEGER(1)).
@@ -1062,7 +1062,7 @@
 -define(SUBADDRESS_DEFAULT_VALUE, #subaddress{}).
 -define(SUBADDRESS_VALUE(Tag, Data), #subaddress{tag = Tag, data = Data}).
 
--define(BILLING_IDENTIFICATION_DEFAULT_VALUE, #billing_identification{}). 
+-define(BILLING_IDENTIFICATION_DEFAULT_VALUE, #billing_identification{}).
 -define(BILLING_IDENTIFICATION_VALUE(Tag, Data), #billing_identification{tag = Tag, data = Data}).
 
 -define(CALLBACK_NUM_DEFAULT_VALUE, #callback_num{}).
